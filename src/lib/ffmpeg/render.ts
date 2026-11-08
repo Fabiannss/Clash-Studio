@@ -2,6 +2,7 @@ import { allClipKeys, clipId, clipSeconds, takeSeconds } from '@/domain/clips';
 import { BEATS_PER_TAKE, TAKE_COUNT } from '@/domain/constants';
 import type { TakeIndex } from '@/domain/types';
 import { readOutput, removeFiles, writeInput } from './files';
+import type { ClipFxPlan } from './fxFilters';
 import { joinTake } from './joinTake';
 import { joinTakes } from './joinTakes';
 import { withFfmpegLock } from './lock';
@@ -13,6 +14,8 @@ export interface RenderInput {
   clips: Map<string, File>;
   music: File | null;
   keepClipAudio: boolean;
+  /** Efeitos de cada clipe; sem isso, os clipes só são padronizados. */
+  fxFor?: (take: number, beat: number, seconds: number) => ClipFxPlan;
   onProgress: (stage: string, overall: number) => void;
 }
 
@@ -70,7 +73,10 @@ async function renderBattleUnlocked(input: RenderInput): Promise<RenderResult> {
       const norm = `norm-${clipId(key)}.mp4`;
       created.push(raw, norm);
       await writeInput(raw, input.clips.get(clipId(key))!);
-      await tracker.run(step++, (local) => normalizeClip(raw, norm, clipSeconds(key), local));
+      const seconds = clipSeconds(key);
+      await tracker.run(step++, (local) =>
+        normalizeClip(raw, norm, seconds, local, input.fxFor?.(key.take, key.beat, seconds)),
+      );
     }
 
     // 2. Une os sub-clipes de cada take.

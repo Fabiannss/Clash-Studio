@@ -1,4 +1,5 @@
 import { OUTPUT } from '@/domain/constants';
+import { buildFxFilters, type ClipFxPlan } from './fxFilters';
 import { hasAudioStream } from './probe';
 import { runFfmpeg } from './run';
 
@@ -12,15 +13,24 @@ export async function normalizeClip(
   output: string,
   seconds: number,
   onProgress?: (fraction: number) => void,
+  fx?: ClipFxPlan,
 ): Promise<void> {
   const { width, height, fps } = OUTPUT;
   const withAudio = await hasAudioStream(input);
 
-  const videoFilter =
-    `scale=${width}:${height}:force_original_aspect_ratio=decrease,` +
+  const effects = fx ? buildFxFilters(fx) : { beforeFps: [], afterFps: [] };
+  const videoFilter = [
+    `scale=${width}:${height}:force_original_aspect_ratio=decrease`,
+    `pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2`,
+    ...effects.beforeFps,
+    `fps=${fps}`,
+    ...effects.afterFps,
     // tpad repete o último quadro: se o clipe vier um pouco mais curto que o necessário (ex.: 4s no
     // lugar de 4,3s), o take não encolhe. O corte exato fica por conta do -t abaixo.
-    `pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2,fps=${fps},tpad=stop_mode=clone:stop_duration=1,format=yuv420p,setsar=1`;
+    'tpad=stop_mode=clone:stop_duration=1',
+    'format=yuv420p',
+    'setsar=1',
+  ].join(',');
   const audioFilter = 'aresample=44100,aformat=channel_layouts=stereo,apad';
 
   const args = withAudio

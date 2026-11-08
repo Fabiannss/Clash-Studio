@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback } from 'react';
+import { makeFxPlanner } from '@/lib/ffmpeg/fxPlan';
 import { renderBattle } from '@/lib/ffmpeg/render';
 import { useStudioStore } from '@/store/useStudioStore';
 
@@ -17,6 +18,7 @@ export function useRender() {
         clips,
         music: state.music,
         keepClipAudio: state.keepClipAudio,
+        fxFor: makeFxPlanner(state.fx, state.focus),
         onProgress: (stage, progress) => useStudioStore.getState().setRender({ stage, progress }),
       });
 

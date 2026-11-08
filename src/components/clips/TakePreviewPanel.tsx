@@ -2,8 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { BEAT_SECONDS, TAKE_PLAN } from '@/domain/constants';
-import { takeFiles, useTakePreview } from '@/hooks/useTakePreview';
-import { takeSignature } from '@/lib/takeSignature';
+import { previewSignature, takeFiles, useTakePreview } from '@/hooks/useTakePreview';
 import { useStudioStore } from '@/store/useStudioStore';
 import { actAccent } from '../ui/accents';
 
@@ -11,6 +10,8 @@ import { actAccent } from '../ui/accents';
 export function TakePreviewPanel() {
   const preview = useStudioStore((s) => s.takePreview);
   const clips = useStudioStore((s) => s.clips);
+  const fx = useStudioStore((s) => s.fx);
+  const focus = useStudioStore((s) => s.focus);
   const renderRunning = useStudioStore((s) => s.render.status === 'running');
   const close = useStudioStore((s) => s.resetTakePreview);
   const build = useTakePreview();
@@ -30,7 +31,8 @@ export function TakePreviewPanel() {
   const title = TAKE_PLAN[take - 1].title;
   // `clips` está assinado acima: a tela reavalia quando algum arquivo é trocado.
   const files = clips ? takeFiles(take) : null;
-  const stale = preview.status === 'done' && (!files || takeSignature(files) !== preview.signature);
+  // `fx` e `focus` estão assinados acima: a tela reavalia quando um efeito muda.
+  const stale = preview.status === 'done' && (!files || !fx || !focus || previewSignature(take) !== preview.signature);
   const seconds = BEAT_SECONDS.reduce((sum, s) => sum + s, 0);
 
   return (
@@ -94,7 +96,7 @@ export function TakePreviewPanel() {
           />
           {stale && (
             <div className="flex flex-wrap items-center gap-3">
-              <p className="text-xs text-act2">Os clipes deste take mudaram depois da junção.</p>
+              <p className="text-xs text-act2">Os clipes ou os efeitos deste take mudaram depois da junção.</p>
               <button
                 type="button"
                 onClick={() => build(take)}

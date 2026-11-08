@@ -5,6 +5,7 @@ import { clipId } from '@/domain/clips';
 import type { CameraId } from '@/domain/cameras';
 import type { StyleId } from '@/domain/styles';
 import type { PromptLang } from '@/domain/lang';
+import { DEFAULT_FX, type FocusChoice, type FxSettings } from '@/domain/fx';
 import type {
   BattleScript,
   ClipKey,
@@ -53,6 +54,9 @@ interface StudioState {
   clips: Record<string, UploadedClip>;
   music: File | null;
   keepClipAudio: boolean;
+  fx: FxSettings;
+  /** Lutador em foco por clipe (id "take-beat"). Sem registro, vale o padrão alternado. */
+  focus: Record<string, FocusChoice>;
   render: RenderState;
   takePreview: TakePreviewState;
   preview: PreviewTarget;
@@ -73,6 +77,8 @@ interface StudioState {
   removeClip: (key: ClipKey) => void;
   setMusic: (file: File | null) => void;
   setKeepClipAudio: (value: boolean) => void;
+  setFx: (patch: Partial<FxSettings>) => void;
+  setFocus: (key: ClipKey, choice: FocusChoice) => void;
   setRender: (patch: Partial<RenderState>) => void;
   resetRender: () => void;
   setTakePreview: (patch: Partial<TakePreviewState>) => void;
@@ -102,6 +108,8 @@ export const useStudioStore = create<StudioState>()(
   clips: {},
   music: null,
   keepClipAudio: true,
+  fx: DEFAULT_FX,
+  focus: {},
   render: idleRender,
   takePreview: idleTakePreview,
   preview: 'final',
@@ -184,6 +192,8 @@ export const useStudioStore = create<StudioState>()(
 
   setMusic: (music) => set({ music }),
   setKeepClipAudio: (keepClipAudio) => set({ keepClipAudio }),
+  setFx: (patch) => set((s) => ({ fx: { ...s.fx, ...patch } })),
+  setFocus: (key, choice) => set((s) => ({ focus: { ...s.focus, [clipId(key)]: choice } })),
 
   setRender: (patch) => set((s) => ({ render: { ...s.render, ...patch } })),
   resetRender: () => {
@@ -216,6 +226,8 @@ export const useStudioStore = create<StudioState>()(
       clips: {},
       music: null,
       keepClipAudio: true,
+      fx: DEFAULT_FX,
+      focus: {},
       render: idleRender,
       takePreview: idleTakePreview,
       preview: 'final',
@@ -246,11 +258,19 @@ export const useStudioStore = create<StudioState>()(
         fighters: s.fighters,
         script: s.script,
         keepClipAudio: s.keepClipAudio,
+        fx: s.fx,
+        focus: s.focus,
         publish: s.publish,
       }),
       merge: (persisted, current) => {
         const saved = (persisted ?? {}) as Partial<StudioState>;
-        return { ...current, ...saved, script: sanitizeScript(saved.script) };
+        return {
+          ...current,
+          ...saved,
+          fx: { ...DEFAULT_FX, ...(saved.fx ?? {}) },
+          focus: saved.focus ?? {},
+          script: sanitizeScript(saved.script),
+        };
       },
     },
   ),

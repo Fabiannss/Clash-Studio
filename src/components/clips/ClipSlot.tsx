@@ -8,6 +8,7 @@ import { extractLastFrame } from '@/lib/ffmpeg/lastFrame';
 import { composeClipPrompt } from '@/services/script/composeClipPrompt';
 import { useStudioStore } from '@/store/useStudioStore';
 import { CameraSelect } from '../script/CameraSelect';
+import { FocusSelect } from './FocusSelect';
 import { CopyButton } from '../ui/CopyButton';
 import { actAccent } from '../ui/accents';
 
@@ -52,6 +53,7 @@ export function ClipSlot({ clipKey, beat }: { clipKey: ClipKey; beat: Beat }) {
       </div>
 
       <CameraSelect take={clipKey.take} beat={beat} />
+      <FocusSelect clipKey={clipKey} />
 
       <p className="font-mono text-xs leading-relaxed text-mute">{promptText}</p>
 

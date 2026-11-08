@@ -1,5 +1,6 @@
 import { BEAT_SECONDS } from '@/domain/constants';
 import { readOutput, removeFiles, writeInput } from './files';
+import type { ClipFxPlan } from './fxFilters';
 import { joinTake } from './joinTake';
 import { withFfmpegLock } from './lock';
 import { normalizeClip } from './normalize';
@@ -7,6 +8,8 @@ import { normalizeClip } from './normalize';
 export interface RenderTakeInput {
   /** Os 3 clipes do take, na ordem. */
   clips: File[];
+  /** Efeitos de cada clipe (beat de 1 a 3); sem isso, os clipes só são padronizados. */
+  fxFor?: (beat: number, seconds: number) => ClipFxPlan;
   onProgress: (stage: string, overall: number) => void;
 }
 
@@ -29,8 +32,12 @@ export function renderTake(input: RenderTakeInput): Promise<Blob> {
         parts.push(norm);
         await writeInput(raw, input.clips[i]);
         report(`Padronizando clipe ${i + 1} de ${BEAT_SECONDS.length}`, i);
-        await normalizeClip(raw, norm, BEAT_SECONDS[i], (f) =>
-          report(`Padronizando clipe ${i + 1} de ${BEAT_SECONDS.length}`, i + f),
+        await normalizeClip(
+          raw,
+          norm,
+          BEAT_SECONDS[i],
+          (f) => report(`Padronizando clipe ${i + 1} de ${BEAT_SECONDS.length}`, i + f),
+          input.fxFor?.(i + 1, BEAT_SECONDS[i]),
         );
       }
 

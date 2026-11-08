@@ -8,6 +8,7 @@ import { BEAT_SECONDS } from '@/domain/constants';
 import { useTakePreview } from '@/hooks/useTakePreview';
 import { ClipSlot } from '../clips/ClipSlot';
 import { TakePreviewPanel } from '../clips/TakePreviewPanel';
+import { FxPanel } from '../render/FxPanel';
 import { ExportPrompts } from '../script/ExportPrompts';
 import { actAccent } from '../ui/accents';
 
@@ -42,6 +43,8 @@ export function ClipsStep() {
       </header>
 
       <TakePreviewPanel />
+
+      <FxPanel />
 
       {script.takes.map((take) => {
         const accent = actAccent[take.index as TakeIndex];

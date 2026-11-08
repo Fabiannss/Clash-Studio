@@ -3,6 +3,7 @@
 import { allClipKeys, clipId } from '@/domain/clips';
 import { useRender } from '@/hooks/useRender';
 import { useStudioStore } from '@/store/useStudioStore';
+import { FxPanel } from '../render/FxPanel';
 import { MusicOptions } from '../render/MusicOptions';
 import { PreviewPlayer } from '../render/PreviewPlayer';
 
@@ -31,6 +32,8 @@ export function RenderStep() {
           Faltam clipes. Volte à etapa de clipes e envie os 9 arquivos antes de montar.
         </p>
       )}
+
+      <FxPanel />
 
       <MusicOptions />
 
